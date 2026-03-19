@@ -222,6 +222,7 @@ export function QuarterlyGantt() {
       {showModal && (
         <AddTaskModal
           jiraCredentials={credentials}
+          existingJiraKeys={quarter.tasks.map(t => t.jiraKey).filter(Boolean) as string[]}
           onAdd={(name, jiraKey, jiraUrl) => addTask(name, jiraKey, jiraUrl)}
           onClose={() => setShowModal(false)}
           onConnectJira={() => { setShowModal(false); setShowJiraAuth(true); }}

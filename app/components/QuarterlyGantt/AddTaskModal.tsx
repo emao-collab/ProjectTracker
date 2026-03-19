@@ -8,12 +8,13 @@ import styles from './QuarterlyGantt.module.scss';
 
 interface AddTaskModalProps {
   jiraCredentials: JiraCredentials | null;
+  existingJiraKeys: string[];
   onAdd: (name: string, jiraKey?: string, jiraUrl?: string) => void;
   onClose: () => void;
   onConnectJira: () => void;
 }
 
-export function AddTaskModal({ jiraCredentials, onAdd, onClose, onConnectJira }: AddTaskModalProps) {
+export function AddTaskModal({ jiraCredentials, existingJiraKeys, onAdd, onClose, onConnectJira }: AddTaskModalProps) {
   const [name, setName] = useState('');
   const [jiraInput, setJiraInput] = useState('');
   const [jiraIssue, setJiraIssue] = useState<JiraIssue | null>(null);
@@ -43,6 +44,10 @@ export function AddTaskModal({ jiraCredentials, onAdd, onClose, onConnectJira }:
     setJiraIssue(null);
     const key = parseIssueKey(jiraInput);
     if (!key) { setJiraError('Invalid Jira ticket key or URL.'); return; }
+    if (existingJiraKeys.includes(key)) {
+      setJiraError(`${key} is already on the board.`);
+      return;
+    }
     setJiraLoading(true);
     try {
       const issue = await fetchJiraIssue(jiraCredentials, key);
