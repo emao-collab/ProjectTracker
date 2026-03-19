@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Icon, Text, PrimaryButton, SecondaryButton } from '@gfm-heart/components';
-import { GanttTask, WEEKS, CURRENT_WEEK_EXTRA, weekToPixel } from './gantt.types';
+import { GanttTask, WEEKS, CURRENT_WEEK_EXTRA, HACKATHON_WEEK, weekToPixel } from './gantt.types';
 import { GanttBar } from './GanttBar';
 import { StatusDropdown } from './StatusDropdown';
 import styles from './QuarterlyGantt.module.scss';
@@ -145,17 +145,27 @@ export function GanttRow({
 
       {/* ── Timeline column ──────────────────────────────── */}
       <div className={styles.timelineCol} style={{ width: WEEKS * weekWidth + (currentWeek ? CURRENT_WEEK_EXTRA : 0) }}>
-        {/* Week grid lines + current week highlight */}
-        {Array.from({ length: WEEKS }, (_, i) => (
-          <div
-            key={i}
-            className={`${styles.gridLine} ${currentWeek === i + 1 ? styles.gridLineCurrent : ''}`}
-            style={{
-              left: weekToPixel(i + 1, weekWidth, currentWeek),
-              width: currentWeek === i + 1 ? weekWidth + CURRENT_WEEK_EXTRA : weekWidth,
-            }}
-          />
-        ))}
+        {/* Week grid lines + current week highlight + hackathon */}
+        {Array.from({ length: WEEKS }, (_, i) => {
+          const weekNum = i + 1;
+          const isCurrent = currentWeek === weekNum;
+          const isHackathon = weekNum === HACKATHON_WEEK;
+          const cls = [
+            styles.gridLine,
+            isCurrent ? styles.gridLineCurrent : '',
+            isHackathon ? styles.gridLineHackathon : '',
+          ].filter(Boolean).join(' ');
+          return (
+            <div
+              key={i}
+              className={cls}
+              style={{
+                left: weekToPixel(weekNum, weekWidth, currentWeek),
+                width: isCurrent ? weekWidth + CURRENT_WEEK_EXTRA : weekWidth,
+              }}
+            />
+          );
+        })}
 
         {/* Draggable bar */}
         <GanttBar

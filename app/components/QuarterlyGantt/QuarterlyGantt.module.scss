@@ -194,6 +194,12 @@ $row-h:    48px;
   font-weight: 700;
 }
 
+.weekCellHackathon {
+  background: #fff3e0;
+  color: #e65100;
+  font-weight: 700;
+}
+
 // ── Body ─────────────────────────────────────────────────────────────────────
 .ganttBody {
   display: flex;
@@ -348,6 +354,17 @@ $row-h:    48px;
 
 .gridLineCurrent {
   background: #e6f4ea;
+}
+
+.gridLineHackathon {
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(230, 81, 0, 0.05),
+    rgba(230, 81, 0, 0.05) 4px,
+    transparent 4px,
+    transparent 12px
+  );
+  border-right-color: rgba(230, 81, 0, 0.2);
 }
 
 // ── Bar ───────────────────────────────────────────────────────────────────────

@@ -49,6 +49,7 @@ export const STATUS_BORDER: Record<TaskStatus, string> = {
 
 export const WEEKS = 15;
 export const CURRENT_WEEK_EXTRA = 28; // extra px for the current week column
+export const HACKATHON_WEEK = 12;     // Jun 1–5 2026
 
 /**
  * Convert a fractional 1-based week number to a pixel offset,

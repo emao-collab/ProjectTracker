@@ -2,7 +2,7 @@
 
 import { useRef } from 'react';
 import styles from './QuarterlyGantt.module.scss';
-import { WEEKS, CURRENT_WEEK_EXTRA, weekToPixel } from './gantt.types';
+import { WEEKS, CURRENT_WEEK_EXTRA, HACKATHON_WEEK, weekToPixel } from './gantt.types';
 
 const MIN_TASK_COL = 120;
 const MAX_TASK_COL = 480;
@@ -89,15 +89,26 @@ export function GanttHeader({ startDate, weekWidth, taskColWidth, onTaskColResiz
 
         {/* Week row */}
         <div className={styles.weekRow}>
-          {Array.from({ length: WEEKS }, (_, i) => (
-            <div
-              key={i}
-              className={`${styles.weekCell} ${currentWeek === i + 1 ? styles.weekCellCurrent : ''}`}
-              style={{ width: currentWeek === i + 1 ? weekWidth + CURRENT_WEEK_EXTRA : weekWidth }}
-            >
-              W{i + 1}
-            </div>
-          ))}
+          {Array.from({ length: WEEKS }, (_, i) => {
+            const weekNum = i + 1;
+            const isCurrent = currentWeek === weekNum;
+            const isHackathon = weekNum === HACKATHON_WEEK;
+            const cls = [
+              styles.weekCell,
+              isCurrent ? styles.weekCellCurrent : '',
+              isHackathon ? styles.weekCellHackathon : '',
+            ].filter(Boolean).join(' ');
+            return (
+              <div
+                key={i}
+                className={cls}
+                style={{ width: isCurrent ? weekWidth + CURRENT_WEEK_EXTRA : weekWidth }}
+                title={isHackathon ? 'Hackathon – Jun 1–5' : undefined}
+              >
+                {isHackathon ? '🎉 Hack' : `W${weekNum}`}
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
