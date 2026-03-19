@@ -8,11 +8,12 @@ interface GanttBarProps {
   task: GanttTask;
   weekWidth: number;
   currentWeek: number | null;
+  isReadOnly: boolean;
   onMove: (startWeek: number, endWeek: number) => void;
   onStatusClick: () => void;
 }
 
-export function GanttBar({ task, weekWidth, currentWeek, onMove, onStatusClick }: GanttBarProps) {
+export function GanttBar({ task, weekWidth, currentWeek, isReadOnly, onMove, onStatusClick }: GanttBarProps) {
   const barRef = useRef<HTMLDivElement>(null);
   const dragState = useRef<{
     type: 'move' | 'resize-left' | 'resize-right';
@@ -88,20 +89,20 @@ export function GanttBar({ task, weekWidth, currentWeek, onMove, onStatusClick }
     <div
       ref={barRef}
       className={styles.bar}
-      style={{ left, width, background: cfg.color, borderColor }}
-      onMouseDown={e => onMouseDown(e, 'move')}
-      title={`${task.name} · ${cfg.label}\nClick to change status`}
+      style={{ left, width, background: cfg.color, borderColor, cursor: isReadOnly ? 'default' : undefined }}
+      onMouseDown={isReadOnly ? undefined : e => onMouseDown(e, 'move')}
+      title={`${task.name} · ${cfg.label}${isReadOnly ? '' : '\nClick to change status'}`}
     >
-      <div
+      {!isReadOnly && <div
         className={`${styles.handle} ${styles.handleLeft}`}
         onMouseDown={e => onMouseDown(e, 'resize-left')}
-      />
+      />}
       <span className={styles.barLabel}>{task.name}</span>
       <span className={styles.statusDot} style={{ background: borderColor }} />
-      <div
+      {!isReadOnly && <div
         className={`${styles.handle} ${styles.handleRight}`}
         onMouseDown={e => onMouseDown(e, 'resize-right')}
-      />
+      />}
     </div>
   );
 }

@@ -14,13 +14,14 @@ interface GanttRowProps {
   currentWeek: number | null;
   index: number;
   isDragging: boolean;
+  isReadOnly: boolean;
   onUpdate: (patch: Partial<GanttTask>) => void;
   onDelete: () => void;
   onDragHandleMouseDown: (e: React.MouseEvent) => void;
 }
 
 export function GanttRow({
-  task, weekWidth, taskColWidth, currentWeek, index, isDragging,
+  task, weekWidth, taskColWidth, currentWeek, index, isDragging, isReadOnly,
   onUpdate, onDelete, onDragHandleMouseDown,
 }: GanttRowProps) {
   const [editing, setEditing] = useState(false);
@@ -69,16 +70,18 @@ export function GanttRow({
         <div className={styles.taskColInner}>
 
           {/* Drag handle */}
-          <div
-            className={styles.dragHandle}
-            onMouseDown={onDragHandleMouseDown}
-            title="Drag to reorder"
-          >
-            <span className={styles.dragHandleDots} />
-          </div>
+          {!isReadOnly && (
+            <div
+              className={styles.dragHandle}
+              onMouseDown={onDragHandleMouseDown}
+              title="Drag to reorder"
+            >
+              <span className={styles.dragHandleDots} />
+            </div>
+          )}
 
-          {/* Task name (editable) */}
-          {editing ? (
+          {/* Task name (editable in edit mode, plain in read-only) */}
+          {editing && !isReadOnly ? (
             <input
               ref={inputRef}
               className={styles.taskNameInput}
@@ -98,15 +101,16 @@ export function GanttRow({
               rel="noopener noreferrer"
               className={`${styles.taskName} ${styles.taskNameLink}`}
               title={task.name}
-              onDoubleClick={e => { e.preventDefault(); setDraft(task.name); setEditing(true); }}
+              onDoubleClick={isReadOnly ? undefined : e => { e.preventDefault(); setDraft(task.name); setEditing(true); }}
             >
               {task.name}
             </a>
           ) : (
             <span
               className={styles.taskName}
-              onClick={() => { setDraft(task.name); setEditing(true); }}
-              title="Click to edit"
+              onClick={isReadOnly ? undefined : () => { setDraft(task.name); setEditing(true); }}
+              title={isReadOnly ? task.name : 'Click to edit'}
+              style={isReadOnly ? { cursor: 'default' } : undefined}
             >
               {task.name}
             </span>
@@ -127,13 +131,15 @@ export function GanttRow({
           )}
 
           {/* Delete */}
-          <button
-            className={styles.deleteBtn}
-            onClick={() => setShowDeleteConfirm(true)}
-            aria-label={`Delete task: ${task.name}`}
-          >
-            <Icon name="close" size="small" />
-          </button>
+          {!isReadOnly && (
+            <button
+              className={styles.deleteBtn}
+              onClick={() => setShowDeleteConfirm(true)}
+              aria-label={`Delete task: ${task.name}`}
+            >
+              <Icon name="close" size="small" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -156,6 +162,7 @@ export function GanttRow({
           task={task}
           weekWidth={weekWidth}
           currentWeek={currentWeek}
+          isReadOnly={isReadOnly}
           onMove={(s, e) => onUpdate({ startWeek: s, endWeek: e })}
           onStatusClick={() => setShowStatus(v => !v)}
         />

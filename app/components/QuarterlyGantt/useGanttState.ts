@@ -4,6 +4,14 @@ import { useState, useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { GanttTask, GanttQuarter, TaskStatus } from './gantt.types';
 
+const STATUS_PRIORITY: Record<TaskStatus, number> = {
+  'in-progress': 1,
+  'review':      2,
+  'blocked':     3,
+  'not-started': 4,
+  'complete':    5,
+};
+
 const STORAGE_KEY = 'gantt_quarter';
 
 function getCurrentQuarter(): GanttQuarter {
@@ -47,10 +55,14 @@ export function useGanttState() {
   }, []);
 
   const updateTask = useCallback((id: string, patch: Partial<GanttTask>) => {
-    setQuarter(q => ({
-      ...q,
-      tasks: q.tasks.map(t => (t.id === id ? { ...t, ...patch } : t)),
-    }));
+    setQuarter(q => {
+      const updated = q.tasks.map(t => (t.id === id ? { ...t, ...patch } : t));
+      // Re-sort by status priority when status changes (stable sort preserves relative order within same status)
+      if (patch.status !== undefined) {
+        updated.sort((a, b) => STATUS_PRIORITY[a.status] - STATUS_PRIORITY[b.status]);
+      }
+      return { ...q, tasks: updated };
+    });
   }, []);
 
   const deleteTask = useCallback((id: string) => {

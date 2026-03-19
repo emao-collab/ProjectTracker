@@ -8,11 +8,13 @@ import { AddTaskModal } from './AddTaskModal';
 import { JiraAuthModal } from './JiraAuthModal';
 import { useGanttState } from './useGanttState';
 import { useJiraCredentials } from './useJiraCredentials';
-import { STATUS_CONFIG, TaskStatus, WEEKS, CURRENT_WEEK_EXTRA } from './gantt.types';
+import { STATUS_CONFIG, TaskStatus, WEEKS, CURRENT_WEEK_EXTRA, GanttQuarter } from './gantt.types';
+
 import styles from './QuarterlyGantt.module.scss';
 
 const MIN_WEEK_WIDTH = 48;
 const DEFAULT_TASK_COL = 320;
+const ROW_HEIGHT = 48;
 
 function getCurrentWeek(startDate: string): number | null {
   const start = new Date(startDate);
@@ -22,14 +24,26 @@ function getCurrentWeek(startDate: string): number | null {
   return week >= 1 && week <= WEEKS ? week : null;
 }
 
-const ROW_HEIGHT = 48;
+function encodeShare(quarter: GanttQuarter): string {
+  return btoa(unescape(encodeURIComponent(JSON.stringify(quarter))));
+}
+
+function decodeShare(raw: string): GanttQuarter | null {
+  try {
+    return JSON.parse(decodeURIComponent(escape(atob(raw))));
+  } catch {
+    return null;
+  }
+}
 
 export function QuarterlyGantt() {
-  const { quarter, addTask, updateTask, deleteTask, reorderTasks, setStatus, moveBar } = useGanttState();
+  const { quarter, addTask, updateTask, deleteTask, reorderTasks } = useGanttState();
   const { credentials, save: saveCredentials, clear: clearCredentials } = useJiraCredentials();
   const [showModal, setShowModal] = useState(false);
   const [showJiraAuth, setShowJiraAuth] = useState(false);
   const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [sharedView, setSharedView] = useState<GanttQuarter | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const [weekWidth, setWeekWidth] = useState(MIN_WEEK_WIDTH);
@@ -37,20 +51,33 @@ export function QuarterlyGantt() {
   const [dragState, setDragState] = useState<{ fromIndex: number; dropLine: number } | null>(null);
   const dragStateRef = useRef<{ fromIndex: number; dropLine: number } | null>(null);
 
+  // Detect share param on mount
+  useEffect(() => {
+    const param = new URLSearchParams(window.location.search).get('share');
+    if (param) setSharedView(decodeShare(param));
+  }, []);
+
+  const isReadOnly = sharedView !== null;
+  const view = sharedView ?? quarter;
+
   useEffect(() => {
     const el = wrapperRef.current;
     if (!el) return;
     const observer = new ResizeObserver(entries => {
       const width = entries[0].contentRect.width;
-      const cw = getCurrentWeek(quarter.startDate);
+      const cw = getCurrentWeek(view.startDate);
       setWeekWidth(Math.max(MIN_WEEK_WIDTH, (width - taskColWidth - (cw ? CURRENT_WEEK_EXTRA : 0)) / WEEKS));
     });
     observer.observe(el);
     return () => observer.disconnect();
-  }, [taskColWidth]);
+  }, [taskColWidth, view.startDate]);
 
-  const handleAddTask = (name: string, jiraKey?: string, jiraUrl?: string) => {
-    addTask(name, jiraKey, jiraUrl);
+  const handleShare = () => {
+    const url = `${window.location.origin}${window.location.pathname}?share=${encodeShare(quarter)}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    });
   };
 
   const handleDragHandleMouseDown = (fromIndex: number) => (e: React.MouseEvent) => {
@@ -88,19 +115,26 @@ export function QuarterlyGantt() {
     window.addEventListener('mouseup', onMouseUp);
   };
 
+  const currentWeek = getCurrentWeek(view.startDate);
+
   return (
     <div className={styles.root}>
 
       {/* ── Toolbar ──────────────────────────────────────── */}
       <div className={styles.toolbar}>
         <div className={styles.toolbarLeft}>
-          <Text as="h1" variant="heading-lg">{quarter.label}</Text>
+          <div className={styles.toolbarTitleRow}>
+            <Text as="h1" variant="heading-lg">{view.label}</Text>
+            {isReadOnly && (
+              <span className={styles.viewOnlyBadge}>View only</span>
+            )}
+          </div>
 
           {/* Status counts */}
           <div className={styles.legend}>
             {(Object.entries(STATUS_CONFIG) as [TaskStatus, typeof STATUS_CONFIG[TaskStatus]][]).map(
               ([key, cfg]) => {
-                const count = quarter.tasks.filter(t => t.status === key).length;
+                const count = view.tasks.filter(t => t.status === key).length;
                 return (
                   <div key={key} className={styles.legendItem}>
                     <span className={styles.legendDot} style={{ background: cfg.color, border: `1px solid ${cfg.color === '#f5f5f5' ? '#d8d8d8' : cfg.color}` }} />
@@ -113,48 +147,54 @@ export function QuarterlyGantt() {
           </div>
         </div>
 
-        {/* Jira connect/disconnect */}
-        {credentials ? (
-          <SecondaryButton as="button" size="medium" variant="default" onClick={() => setShowDisconnectConfirm(true)}>
-            <Icon name="close" size="default" />
-            Disconnect Jira
-          </SecondaryButton>
-        ) : (
-          <SecondaryButton as="button" size="medium" variant="default" onClick={() => setShowJiraAuth(true)}>
-            Connect Jira
-          </SecondaryButton>
-        )}
+        {!isReadOnly && (
+          <>
+            {/* Jira connect (only shown when not connected) */}
+            {!credentials && (
+              <SecondaryButton as="button" size="medium" variant="default" onClick={() => setShowJiraAuth(true)}>
+                Connect Jira
+              </SecondaryButton>
+            )}
 
-        <PrimaryButton as="button" size="medium" variant="default" onClick={() => setShowModal(true)}>
-          <Icon name="add" size="default" />
-          Add Task
-        </PrimaryButton>
+            {/* Share button */}
+            <SecondaryButton as="button" size="medium" variant="default" onClick={handleShare}>
+              <Icon name="share" size="default" />
+              {copied ? 'Link copied!' : 'Share'}
+            </SecondaryButton>
+
+            <PrimaryButton as="button" size="medium" variant="default" onClick={() => setShowModal(true)}>
+              <Icon name="add" size="default" />
+              Add Task
+            </PrimaryButton>
+          </>
+        )}
       </div>
 
       {/* ── Gantt table ──────────────────────────────────── */}
       <div className={styles.ganttWrapper} ref={wrapperRef}>
         <GanttHeader
-          startDate={quarter.startDate}
+          startDate={view.startDate}
           weekWidth={weekWidth}
           taskColWidth={taskColWidth}
-          onTaskColResize={setTaskColWidth}
-          currentWeek={getCurrentWeek(quarter.startDate)}
+          onTaskColResize={isReadOnly ? () => {} : setTaskColWidth}
+          currentWeek={currentWeek}
         />
 
         <div className={styles.ganttBody} ref={bodyRef} style={{ position: 'relative' }}>
-          {quarter.tasks.length === 0 ? (
+          {view.tasks.length === 0 ? (
             <div className={styles.empty}>
               <Text as="p" variant="body-md">No tasks yet. Click "Add Task" to get started.</Text>
             </div>
           ) : (
-            quarter.tasks.map((task, i) => (
+            view.tasks.map((task, i) => (
               <GanttRow
                 key={task.id}
                 task={task}
                 weekWidth={weekWidth}
                 taskColWidth={taskColWidth}
-                currentWeek={getCurrentWeek(quarter.startDate)}
+                currentWeek={currentWeek}
                 index={i}
+                isReadOnly={isReadOnly}
                 isDragging={dragState?.fromIndex === i}
                 onUpdate={patch => updateTask(task.id, patch)}
                 onDelete={() => deleteTask(task.id)}
@@ -177,7 +217,7 @@ export function QuarterlyGantt() {
       {showModal && (
         <AddTaskModal
           jiraCredentials={credentials}
-          onAdd={handleAddTask}
+          onAdd={(name, jiraKey, jiraUrl) => addTask(name, jiraKey, jiraUrl)}
           onClose={() => setShowModal(false)}
           onConnectJira={() => { setShowModal(false); setShowJiraAuth(true); }}
         />
