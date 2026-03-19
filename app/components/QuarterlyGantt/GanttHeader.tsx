@@ -8,8 +8,13 @@ const MIN_TASK_COL = 120;
 const MAX_TASK_COL = 480;
 
 // Compute month label spans from a quarter start date
+function parseLocalDate(dateStr: string): Date {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d); // local midnight — avoids UTC-parse timezone shift
+}
+
 function getMonthSpans(startDate: string) {
-  const start = new Date(startDate);
+  const start = parseLocalDate(startDate);
   const spans: { label: string; weeks: number }[] = [];
   let week = 0;
   let current = new Date(start);

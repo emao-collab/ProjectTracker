@@ -16,8 +16,13 @@ const MIN_WEEK_WIDTH = 48;
 const DEFAULT_TASK_COL = 320;
 const ROW_HEIGHT = 48;
 
+function parseLocalDate(dateStr: string): Date {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
 function getCurrentWeek(startDate: string): number | null {
-  const start = new Date(startDate);
+  const start = parseLocalDate(startDate);
   const today = new Date();
   const diffDays = Math.floor((today.getTime() - start.getTime()) / 86400000);
   const week = Math.floor(diffDays / 7) + 1;
