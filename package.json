@@ -1,0 +1,26 @@
+{
+  "name": "tracker",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3001",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@gfm-heart/components": "^16.10.3",
+    "@gfm-heart/tokens": "^16.10.1",
+    "next": "^15.5.12",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "sass": "^1.98.0",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "@svgr/webpack": "^8.1.0",
+    "@types/react": "~18.2.79",
+    "@types/react-dom": "~18.2.0",
+    "@types/uuid": "^10.0.0",
+    "typescript": "^5.3.3"
+  }
+}

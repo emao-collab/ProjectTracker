@@ -1,0 +1,593 @@
+// ── Variables ─────────────────────────────────────────────────────────────────
+$dark:    #232323;
+$gray:    #6f6f6f;
+$border:  #d8d8d8;
+$surface: #ffffff;
+$bg:      #f5f5f5;
+$task-col: 200px;
+$row-h:    48px;
+
+// ── Root ─────────────────────────────────────────────────────────────────────
+.root {
+  min-height: 100vh;
+  background: $bg;
+  padding: 32px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+// ── Toolbar ───────────────────────────────────────────────────────────────────
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: 16px;
+  padding: 20px 24px;
+}
+
+.toolbarLeft {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.subtitle {
+  color: $gray !important;
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legendCount {
+  color: $gray !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.legendDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+// ── Gantt wrapper ─────────────────────────────────────────────────────────────
+.ganttWrapper {
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: 16px;
+  overflow: visible;
+}
+
+// ── Header ────────────────────────────────────────────────────────────────────
+.header {
+  display: flex;
+  border-bottom: 1px solid $border;
+  position: sticky;
+  top: 0;
+  background: $surface;
+  z-index: 10;
+  border-radius: 16px 16px 0 0;
+}
+
+.headerTaskCol {
+  flex-shrink: 0;
+  border-right: 1px solid $border;
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+}
+
+.headerTaskColLabel {
+  font-family: 'GoFundMe Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: $dark;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.colResizeHandle {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 20;
+
+  &:hover, &:active {
+    &::after {
+      content: '';
+      position: absolute;
+      left: 2px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: #1A73E8;
+      border-radius: 2px;
+    }
+  }
+}
+
+.headerTimeline {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.monthRow {
+  display: flex;
+  border-bottom: 1px solid $border;
+}
+
+.monthCell {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  font-family: 'GoFundMe Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: $dark;
+  border-right: 1px solid $border;
+  white-space: nowrap;
+  overflow: hidden;
+
+  &:last-child { border-right: none; }
+}
+
+.weekRow {
+  display: flex;
+}
+
+.weekCell {
+  flex-shrink: 0;
+  padding: 4px 0;
+  text-align: center;
+  font-family: 'GoFundMe Sans', sans-serif;
+  font-size: 11px;
+  color: $gray;
+  border-right: 1px solid $border;
+
+  &:last-child { border-right: none; }
+}
+
+.weekCellCurrent {
+  background: #e6f4ea;
+  color: #137333;
+  font-weight: 700;
+}
+
+// ── Body ─────────────────────────────────────────────────────────────────────
+.ganttBody {
+  display: flex;
+  flex-direction: column;
+}
+
+.empty {
+  padding: 48px;
+  text-align: center;
+  color: $gray;
+}
+
+// ── Row ───────────────────────────────────────────────────────────────────────
+.row {
+  display: flex;
+  height: $row-h;
+  border-bottom: 1px solid $border;
+  align-items: center;
+
+  &:last-child { border-bottom: none; }
+
+  &:hover .deleteBtn { opacity: 1; }
+  &:hover .dragHandle { opacity: 1; }
+}
+
+// ── Task column ───────────────────────────────────────────────────────────────
+.taskCol {
+  flex-shrink: 0;
+  height: 100%;
+  border-right: 1px solid $border;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+}
+
+.taskColInner {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+}
+
+.dragHandle {
+  flex-shrink: 0;
+  width: 20px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  opacity: 0;
+  transition: opacity 0.15s;
+  border-radius: 4px;
+  color: $gray;
+
+  &:hover { background: $bg; opacity: 1 !important; }
+  &:active { cursor: grabbing; }
+}
+
+.dragHandleDots {
+  display: block;
+  width: 8px;
+  height: 14px;
+  background-image: radial-gradient(circle, $gray 1.5px, transparent 1.5px);
+  background-size: 4px 4px;
+  background-repeat: repeat;
+}
+
+.rowDragging {
+  opacity: 0.4;
+}
+
+.dropIndicator {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #1A73E8;
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 20;
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.15);
+}
+
+.taskNameLink {
+  color: #1A73E8;
+  text-decoration: none;
+
+  &:hover { text-decoration: underline; background: #e8f0fe; }
+}
+
+.taskName {
+  flex: 1;
+  min-width: 0;
+  font-family: 'GoFundMe Sans', sans-serif;
+  font-size: 14px;
+  color: $dark;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: text;
+  border-radius: 4px;
+  padding: 2px 4px;
+
+  &:hover { background: $bg; }
+}
+
+.taskNameInput {
+  flex: 1;
+  min-width: 0;
+  font-family: 'GoFundMe Sans', sans-serif;
+  font-size: 14px;
+  color: $dark;
+  border: 1px solid #1A73E8;
+  border-radius: 4px;
+  padding: 2px 6px;
+  outline: none;
+  background: $surface;
+}
+
+.deleteBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: $gray;
+  opacity: 0;
+  transition: opacity 0.15s;
+  display: flex;
+  align-items: center;
+  border-radius: 4px;
+  flex-shrink: 0;
+
+  &:hover { background: #fce8e6; color: #c5221f; }
+}
+
+// ── Timeline column ───────────────────────────────────────────────────────────
+.timelineCol {
+  position: relative;
+  height: 100%;
+  flex-shrink: 0;
+}
+
+.gridLine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-right: 1px solid $border;
+  pointer-events: none;
+}
+
+.gridLineCurrent {
+  background: #e6f4ea;
+}
+
+// ── Bar ───────────────────────────────────────────────────────────────────────
+.bar {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 32px;
+  border-radius: 6px;
+  border: 1.5px solid;
+  display: flex;
+  align-items: center;
+  cursor: grab;
+  user-select: none;
+  transition: box-shadow 0.15s;
+  padding: 0 8px;
+  gap: 6px;
+  min-width: 0;
+
+  &:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+  &:active { cursor: grabbing; }
+}
+
+.barLabel {
+  font-family: 'GoFundMe Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: $dark;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+  pointer-events: none;
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: ew-resize;
+  z-index: 1;
+  border-radius: 6px;
+
+  &:hover { background: rgba(0,0,0,0.08); }
+}
+
+.handleLeft  { left: 0; }
+.handleRight { right: 0; }
+
+// ── Status dropdown ───────────────────────────────────────────────────────────
+.statusDropdownWrap {
+  position: absolute;
+  top: calc(50% + 20px);
+  left: 0;
+  z-index: 100;
+}
+
+.statusDropdown {
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 160px;
+}
+
+.statusOption {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'GoFundMe Sans', sans-serif;
+  font-size: 14px;
+  color: $dark;
+  text-align: left;
+
+  &:hover { background: $bg; }
+}
+
+.statusOptionActive {
+  font-weight: 700;
+  background: $bg;
+}
+
+.statusOptionDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: $surface;
+  border-radius: 20px;
+  padding: 32px;
+  width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.16);
+}
+
+.modalField {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modalLabel {
+  font-family: 'GoFundMe Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: $dark;
+}
+
+.modalInput {
+  font-family: 'GoFundMe Sans', sans-serif;
+  font-size: 16px;
+  color: $dark;
+  border: 1px solid $border;
+  border-radius: 8px;
+  padding: 10px 12px;
+  outline: none;
+
+  &:focus { border-color: #1A73E8; box-shadow: 0 0 0 3px rgba(26,115,232,0.12); }
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.modalLabelOptional {
+  font-weight: 400;
+  color: $gray;
+}
+
+// ── Jira ──────────────────────────────────────────────────────────────────────
+
+.jiraModalHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.jiraTokenLink {
+  margin-left: 8px;
+  font-size: 12px;
+  font-weight: 400;
+  color: #1A73E8;
+  text-decoration: none;
+
+  &:hover { text-decoration: underline; }
+}
+
+.jiraConnectPrompt {
+  background: none;
+  border: none;
+  padding: 0;
+  margin-top: 4px;
+  color: #1A73E8;
+  font-family: 'GoFundMe Sans', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+
+  &:hover { text-decoration: underline; }
+}
+
+.jiraInputRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+
+  .modalInput { flex: 1; }
+}
+
+.jiraIssuePill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 8px 10px;
+  background: #e8f0fe;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.jiraKey {
+  font-family: 'GoFundMe Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: #1A73E8;
+  flex-shrink: 0;
+}
+
+.jiraIssueSummary {
+  font-family: 'GoFundMe Sans', sans-serif;
+  font-size: 13px;
+  color: $dark;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.jiraError {
+  margin-top: 4px;
+  color: #c5221f !important;
+}
+
+// Jira badge in task row
+.jiraBadge {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #e8f0fe;
+  border: 1px solid #aecbfa;
+  font-family: 'GoFundMe Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #1A73E8;
+  text-decoration: none;
+  white-space: nowrap;
+  max-width: 72px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+
+  &:hover {
+    background: #d2e3fc;
+    text-decoration: underline;
+  }
+}
