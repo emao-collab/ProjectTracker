@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useCallback, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { GanttTask, STATUS_CONFIG, STATUS_BORDER, TaskStatus, WEEKS, weekToPixel } from './gantt.types';
 import { StatusDropdown } from './StatusDropdown';
 import styles from './QuarterlyGantt.module.scss';
@@ -16,7 +17,7 @@ interface GanttBarProps {
 
 export function GanttBar({ task, weekWidth, currentWeek, isReadOnly, onMove, onStatusChange }: GanttBarProps) {
   const barRef = useRef<HTMLDivElement>(null);
-  const [showStatus, setShowStatus] = useState(false);
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number } | null>(null);
   const dragState = useRef<{
     type: 'move' | 'resize-left' | 'resize-right';
     startX: number;
@@ -73,7 +74,14 @@ export function GanttBar({ task, weekWidth, currentWeek, isReadOnly, onMove, onS
       dragState.current = null;
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
-      if (!wasDrag && isMove) setShowStatus(v => !v);
+      if (!wasDrag && isMove) {
+        const rect = barRef.current?.getBoundingClientRect();
+        if (rect) {
+          setDropdownPos(prev =>
+            prev ? null : { top: rect.bottom + 6, left: rect.left }
+          );
+        }
+      }
     };
 
     window.addEventListener('mousemove', onMouseMove);
@@ -88,32 +96,36 @@ export function GanttBar({ task, weekWidth, currentWeek, isReadOnly, onMove, onS
   const borderColor = STATUS_BORDER[task.status];
 
   return (
-    <div
-      ref={barRef}
-      className={styles.bar}
-      style={{ left, width, background: cfg.color, borderColor, cursor: isReadOnly ? 'default' : undefined }}
-      onMouseDown={isReadOnly ? undefined : e => onMouseDown(e, 'move')}
-      title={`${task.name} · ${cfg.label}${isReadOnly ? '' : '\nClick to change status'}`}
-    >
-      {!isReadOnly && <div
-        className={`${styles.handle} ${styles.handleLeft}`}
-        onMouseDown={e => onMouseDown(e, 'resize-left')}
-      />}
-      <span className={styles.barLabel}>{task.name}</span>
-      <span className={styles.statusDot} style={{ background: borderColor }} />
-      {!isReadOnly && <div
-        className={`${styles.handle} ${styles.handleRight}`}
-        onMouseDown={e => onMouseDown(e, 'resize-right')}
-      />}
-      {showStatus && (
-        <div className={styles.statusDropdownWrap}>
+    <>
+      <div
+        ref={barRef}
+        className={styles.bar}
+        style={{ left, width, background: cfg.color, borderColor, cursor: isReadOnly ? 'default' : undefined }}
+        onMouseDown={isReadOnly ? undefined : e => onMouseDown(e, 'move')}
+        title={`${task.name} · ${cfg.label}${isReadOnly ? '' : '\nClick to change status'}`}
+      >
+        {!isReadOnly && <div
+          className={`${styles.handle} ${styles.handleLeft}`}
+          onMouseDown={e => onMouseDown(e, 'resize-left')}
+        />}
+        <span className={styles.barLabel}>{task.name}</span>
+        <span className={styles.statusDot} style={{ background: borderColor }} />
+        {!isReadOnly && <div
+          className={`${styles.handle} ${styles.handleRight}`}
+          onMouseDown={e => onMouseDown(e, 'resize-right')}
+        />}
+      </div>
+
+      {dropdownPos && createPortal(
+        <div style={{ position: 'fixed', top: dropdownPos.top, left: dropdownPos.left, zIndex: 9999 }}>
           <StatusDropdown
             current={task.status}
-            onSelect={s => { onStatusChange(s); setShowStatus(false); }}
-            onClose={() => setShowStatus(false)}
+            onSelect={s => { onStatusChange(s); setDropdownPos(null); }}
+            onClose={() => setDropdownPos(null)}
           />
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 }
