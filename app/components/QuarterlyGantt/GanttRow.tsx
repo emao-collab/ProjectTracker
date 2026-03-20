@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from 'react';
 import { Icon, Text, PrimaryButton, SecondaryButton } from '@gfm-heart/components';
 import { GanttTask, WEEKS, CURRENT_WEEK_EXTRA, HACKATHON_WEEK, weekToPixel } from './gantt.types';
 import { GanttBar } from './GanttBar';
-import { StatusDropdown } from './StatusDropdown';
 import styles from './QuarterlyGantt.module.scss';
 
 interface GanttRowProps {
@@ -26,7 +25,6 @@ export function GanttRow({
 }: GanttRowProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(task.name);
-  const [showStatus, setShowStatus] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -174,19 +172,8 @@ export function GanttRow({
           currentWeek={currentWeek}
           isReadOnly={isReadOnly}
           onMove={(s, e) => onUpdate({ startWeek: s, endWeek: e })}
-          onStatusClick={() => setShowStatus(v => !v)}
+          onStatusChange={s => onUpdate({ status: s })}
         />
-
-        {/* Status dropdown */}
-        {showStatus && (
-          <div className={styles.statusDropdownWrap}>
-            <StatusDropdown
-              current={task.status}
-              onSelect={s => onUpdate({ status: s })}
-              onClose={() => setShowStatus(false)}
-            />
-          </div>
-        )}
       </div>
     </div>
     </>

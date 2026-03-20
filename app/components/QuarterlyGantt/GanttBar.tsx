@@ -1,7 +1,8 @@
 'use client';
 
-import { useRef, useCallback } from 'react';
-import { GanttTask, STATUS_CONFIG, STATUS_BORDER, WEEKS, weekToPixel } from './gantt.types';
+import { useRef, useCallback, useState } from 'react';
+import { GanttTask, STATUS_CONFIG, STATUS_BORDER, TaskStatus, WEEKS, weekToPixel } from './gantt.types';
+import { StatusDropdown } from './StatusDropdown';
 import styles from './QuarterlyGantt.module.scss';
 
 interface GanttBarProps {
@@ -10,11 +11,12 @@ interface GanttBarProps {
   currentWeek: number | null;
   isReadOnly: boolean;
   onMove: (startWeek: number, endWeek: number) => void;
-  onStatusClick: () => void;
+  onStatusChange: (status: TaskStatus) => void;
 }
 
-export function GanttBar({ task, weekWidth, currentWeek, isReadOnly, onMove, onStatusClick }: GanttBarProps) {
+export function GanttBar({ task, weekWidth, currentWeek, isReadOnly, onMove, onStatusChange }: GanttBarProps) {
   const barRef = useRef<HTMLDivElement>(null);
+  const [showStatus, setShowStatus] = useState(false);
   const dragState = useRef<{
     type: 'move' | 'resize-left' | 'resize-right';
     startX: number;
@@ -71,7 +73,7 @@ export function GanttBar({ task, weekWidth, currentWeek, isReadOnly, onMove, onS
       dragState.current = null;
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
-      if (!wasDrag && isMove) onStatusClick();
+      if (!wasDrag && isMove) setShowStatus(v => !v);
     };
 
     window.addEventListener('mousemove', onMouseMove);
@@ -103,6 +105,15 @@ export function GanttBar({ task, weekWidth, currentWeek, isReadOnly, onMove, onS
         className={`${styles.handle} ${styles.handleRight}`}
         onMouseDown={e => onMouseDown(e, 'resize-right')}
       />}
+      {showStatus && (
+        <div className={styles.statusDropdownWrap}>
+          <StatusDropdown
+            current={task.status}
+            onSelect={s => { onStatusChange(s); setShowStatus(false); }}
+            onClose={() => setShowStatus(false)}
+          />
+        </div>
+      )}
     </div>
   );
 }

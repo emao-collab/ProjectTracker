@@ -427,9 +427,9 @@ $row-h:    48px;
 // ── Status dropdown ───────────────────────────────────────────────────────────
 .statusDropdownWrap {
   position: absolute;
-  top: calc(50% + 20px);
+  top: calc(100% + 6px);
   left: 0;
-  z-index: 100;
+  z-index: 1000;
 }
 
 .statusDropdown {
